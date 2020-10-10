@@ -12,9 +12,15 @@ if job == "encode":
     direction = 1
 else:
     direction = -1
+
 text = sys.argv[2].upper()
-keytext = sys.argv[3]
-#print(job + " " + text + " " + keytext)
+for i in range(3, len(sys.argv) - 1):
+    text += sys.argv[i].upper()
+
+keytext = sys.argv[-1]
+if len(keytext) != 25:
+    print("key must be 25 letters")
+    sys.exit()
 
 key = np.empty((5,5), dtype=object)
 ind = 0
@@ -24,14 +30,25 @@ for i in range(5):
         ind += 1
 #print(key)
 
-# remove whitespace, add x, j = i, add z
-def condition(s):
+# checks for double letters, used in prep(s)
+def hasDoubleLetters(s):
+    new = ""
+    shift = 0
+    for i in range(len(s)):
+        if (i + shift) % 2 == 1 and s[i] == s[i - 1]:
+            return True
+    return False
+
+# remove whitespace, remove non-alpha characters, add x, j = i, add z
+def prep(s):
+    # make uppercase, remove non-alpha
     s = s.upper()
     new = ""
     for i in s:
         if i.isalpha():
             new += i
     s = new
+    # replace j with i
     new = ""
     for i in s:
         if i == "J":
@@ -39,18 +56,26 @@ def condition(s):
         else:
             new += i
     s = new
-    new = ""
-    shift = 0
-    for i in range(len(s)):
-        if (i + shift) % 2 == 1 and s[i] == s[i - 1]:
-            new += "X"
-            shift += 1
-        new += s[i]
-    if len(s) % 2 == 1:
-        s = s + "Z"
-    return new
+    # adding x between double letters, adding z (or x if already ends in z) if odd
+    # go until done
+    while len(s) % 2 == 1 or hasDoubleLetters(s):
+        new = ""
+        shift = 0
+        for i in range(len(s)):
+            if (i + shift) % 2 == 1 and s[i] == s[i - 1]:
+                new += "X"
+                shift += 1
+            new += s[i]
+        s = new
+        if len(s) % 2 == 1:
+            if s[-1] != "Z":
+                s = s + "Z"
+            else:
+                s = s + "X"
+    return s
+#print(prep("z"))
 
-# encode letter pairs
+# encode/decode two letters in the same column
 def vertical(pair):
     new = ""
     for i in pair:
@@ -58,13 +83,15 @@ def vertical(pair):
         new += key[coord[0][0]][(coord[1][0] + direction) % 5]
     return new
 
+# encode/decode two letters in the same row
 def horizontal(pair):
     new = ""
     for i in pair:
         coord = np.where(key == i)
         new += key[(coord[0][0] + direction) % 5][coord[1][0]]
     return new
-    
+
+# encode/decode two letters in different column and different row
 def regular(pair):
     new = ""
     coord0 = np.where(key == pair[0])
@@ -73,6 +100,7 @@ def regular(pair):
     new += key[coord1[0][0]][coord0[1][0]]
     return new    
 
+# decide which encode/decode function to use, return encoded/decoded pair
 def doPair(pair):
     coord0 = np.where(key == pair[0])
     coord1 = np.where(key == pair[1])
@@ -82,9 +110,9 @@ def doPair(pair):
         return vertical(pair)
     return regular(pair)
 
-# s is uppercase, no spaces
+# encodes/decodes string s
 def encode(s):
-    s = condition(s)
+    s = prep(s)
     new = ""
     for i in range(int(len(s) / 2)):
         new += doPair(s[2*i: 2*i + 2])
