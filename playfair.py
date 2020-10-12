@@ -5,8 +5,7 @@ import sys
 if len(sys.argv) < 2:
    print("usage: encode/decode ciphertext/plaintext keytext")
    sys.exit()
-#args = sys.argv[1].split()
-#print(args)
+
 job = sys.argv[1]
 if job == "encode":
     direction = 1
@@ -28,16 +27,6 @@ for i in range(5):
     for j in range(5):
         key[i][j] = keytext[ind]
         ind += 1
-#print(key)
-
-# checks for double letters, used in prep(s)
-def hasDoubleLetters(s):
-    new = ""
-    shift = 0
-    for i in range(len(s)):
-        if (i + shift) % 2 == 1 and s[i] == s[i - 1]:
-            return True
-    return False
 
 # remove whitespace, remove non-alpha characters, add x, j = i, add z
 def prep(s):
@@ -58,20 +47,19 @@ def prep(s):
     s = new
     # adding x between double letters, adding z (or x if already ends in z) if odd
     # go until done
-    while len(s) % 2 == 1 or hasDoubleLetters(s):
-        new = ""
-        shift = 0
-        for i in range(len(s)):
-            if (i + shift) % 2 == 1 and s[i] == s[i - 1]:
-                new += "X"
-                shift += 1
-            new += s[i]
-        s = new
-        if len(s) % 2 == 1:
-            if s[-1] != "Z":
-                s = s + "Z"
-            else:
-                s = s + "X"
+    new = ""
+    shift = 0
+    for i in range(len(s)):
+        if (i + shift) % 2 == 1 and s[i] == s[i - 1]:
+            new += "X"
+            shift += 1
+        new += s[i]
+    s = new
+    if len(s) % 2 == 1:
+        if s[-1] != "Z":
+            s = s + "Z"
+        else:
+            s = s + "X"
     return s
 #print(prep("z"))
 
